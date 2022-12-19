@@ -1,0 +1,22 @@
+includes:
+    - vendor/slam/phpstan-extensions/conf/slam-rules.neon
+
+parameters:
+    level: 9
+    parallel:
+        maximumNumberOfProcesses: 8
+
+    fileExtensions:
+        - php
+
+    paths:
+        - 'app'
+
+    excludePaths:
+        - 'app/tests'
+        - 'app/Infrastructure/*/Tests/*'
+        - 'app/Models/*/Tests/*'
+        - 'app/Models/*/*/Tests/*'
+
+    checkMissingIterableValueType: false
+    inferPrivatePropertyTypeFromConstructor: true
