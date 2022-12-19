@@ -44,6 +44,13 @@ final class CalcLangCommand extends Command
         $viterbi = $this->getViterbi($textRelativeMatrix, $phraseRelativeMatrix);
         $this->line('Получена матрица viterbi:');
         $this->writeMatrix($viterbi);
+
+        /**
+         * Построение forward.
+         */
+        $forward = $this->getForward($textRelativeMatrix, $phraseRelativeMatrix);
+        $this->line('Получена матрица forward:');
+        $this->writeMatrix($forward);
     }
 
     /**
@@ -132,6 +139,57 @@ final class CalcLangCommand extends Command
                 }
 
                 $partOfSpeechMatrix[$wordInPhrase + 1][$partOfSpeech] = max($partOfSpeechValues);
+            }
+        }
+
+        $partOfSpeechMatrix = $this->transpose($partOfSpeechMatrix);
+
+        return [
+            $headers,
+            ...$partOfSpeechMatrix
+        ];
+    }
+
+    /**
+     * Построение матрицы forward.
+     */
+    private function getForward(array $textRelativeMatrix, array $phraseRelativeMatrix): array
+    {
+        $headers = ['forward', 'start'];
+
+        $phraseRowsCount = count($phraseRelativeMatrix);
+        for ($i = 1; $i < $phraseRowsCount; $i++) {
+            $headers[] = $phraseRelativeMatrix[$i][0];
+        }
+
+        $partOfSpeechMatrix = [];
+        $textRowsCount = count($textRelativeMatrix);
+
+        for ($i = 1; $i < $textRowsCount; $i++) {
+            $partOfSpeech = $textRelativeMatrix[$i][0]; // первый элемент каждой строки - часть речи
+            $partOfSpeechMatrix[0][] = $partOfSpeech;
+            $partOfSpeechMatrix[1][] = 1;
+        }
+
+        $partOfSpeechCount = $textRowsCount - 2; // минус заголовок и сумма
+
+        $textTransposeMatrix = $this->transpose($textRelativeMatrix);
+        $phraseTransposeMatrix = $this->transpose($phraseRelativeMatrix);
+
+        for ($wordInPhrase = 1; $wordInPhrase < $phraseRowsCount; $wordInPhrase++) {
+
+            for ($partOfSpeech = 0; $partOfSpeech <= $partOfSpeechCount; $partOfSpeech++) {
+                $sum = 0;
+                $multiplier = $phraseTransposeMatrix[$partOfSpeech + 1][$wordInPhrase];
+
+                for ($i = 0; $i <= $partOfSpeechCount; $i++) {
+                    $first = $partOfSpeechMatrix[$wordInPhrase][$i];
+                    $second = $textTransposeMatrix[$partOfSpeech + 1][$i + 1];
+
+                    $sum += $first * $second;
+                }
+
+                $partOfSpeechMatrix[$wordInPhrase + 1][$partOfSpeech] = $multiplier * $sum;
             }
         }
 
