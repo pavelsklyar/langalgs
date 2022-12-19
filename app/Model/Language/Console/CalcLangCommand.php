@@ -51,6 +51,13 @@ final class CalcLangCommand extends Command
         $forward = $this->getForward($textRelativeMatrix, $phraseRelativeMatrix);
         $this->line('Получена матрица forward:');
         $this->writeMatrix($forward);
+
+        /**
+         * Построение backward.
+         */
+        $forward = $this->getBackward($textRelativeMatrix, $phraseRelativeMatrix);
+        $this->line('Получена матрица backward:');
+        $this->writeMatrix($forward);
     }
 
     /**
@@ -192,6 +199,60 @@ final class CalcLangCommand extends Command
                 $partOfSpeechMatrix[$wordInPhrase + 1][$partOfSpeech] = $multiplier * $sum;
             }
         }
+
+        $partOfSpeechMatrix = $this->transpose($partOfSpeechMatrix);
+
+        return [
+            $headers,
+            ...$partOfSpeechMatrix
+        ];
+    }
+
+    /**
+     * Построение матрицы backward.
+     */
+    public function getBackward(array $textRelativeMatrix, array $phraseRelativeMatrix): array
+    {
+        $headers = ['backward', 'start'];
+
+        $phraseRowsCount = count($phraseRelativeMatrix);
+        for ($i = 1; $i < $phraseRowsCount; $i++) {
+            $headers[] = $phraseRelativeMatrix[$i][0];
+        }
+
+        $partOfSpeechMatrix = [];
+        $textRowsCount = count($textRelativeMatrix);
+
+        for ($i = 1; $i < $textRowsCount; $i++) {
+            $partOfSpeech = $textRelativeMatrix[$i][0]; // первый элемент каждой строки - часть речи
+            $partOfSpeechMatrix[0][] = $partOfSpeech;
+            $partOfSpeechMatrix[1][] = '-';
+        }
+
+        $partOfSpeechCount = $textRowsCount - 2; // минус заголовок и сумма
+        $phraseTransposeMatrix = $this->transpose($phraseRelativeMatrix);
+
+        for ($partOfSpeech = 0; $partOfSpeech <= $partOfSpeechCount; $partOfSpeech++) {
+            $partOfSpeechMatrix[$phraseRowsCount][$partOfSpeech] = 1;
+        }
+
+        for ($wordInPhrase = $phraseRowsCount - 1; $wordInPhrase > 1; $wordInPhrase--) {
+            for ($partOfSpeech = 0; $partOfSpeech <= $partOfSpeechCount; $partOfSpeech++) {
+                $sum = 0;
+
+                for ($i = 0; $i <= $partOfSpeechCount; $i++) {
+                    $first = $partOfSpeechMatrix[$wordInPhrase + 1][$i];
+                    $second = $textRelativeMatrix[$partOfSpeech + 1][$i + 1];
+                    $third = $phraseTransposeMatrix[$i + 1][$wordInPhrase];
+
+                    $sum += $first * $second * $third;
+                }
+
+                $partOfSpeechMatrix[$wordInPhrase][$partOfSpeech] = $sum;
+            }
+        }
+
+        ksort($partOfSpeechMatrix);
 
         $partOfSpeechMatrix = $this->transpose($partOfSpeechMatrix);
 
