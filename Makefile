@@ -43,3 +43,6 @@ psalm:
 	docker compose run --rm php-cli vendor/bin/psalm
 psalm-generate-baseline:
 	docker compose run --rm php-cli vendor/bin/psalm --no-cache --set-baseline=psalm-baseline.xml
+
+run:
+	docker compose run --rm php-cli php artisan app:lang:calc --text=/app/textMatrix.csv --phrase=/app/phraseMatrix.csv

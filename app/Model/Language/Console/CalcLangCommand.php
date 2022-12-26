@@ -486,7 +486,7 @@ final class CalcLangCommand extends Command
         $matrix[-1] = ['b_i', ...$partOfSpeeches];
         ksort($matrix);
 
-        $this->line('Построена матрица a_ij:');
+        $this->line('Построена матрица b_i:');
         $this->writeMatrix($matrix);
     }
 
